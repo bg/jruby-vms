@@ -321,7 +321,13 @@ module WEBrick
     end
 
     def _write_data(socket, data)
-      socket << data
+      begin
+        socket << data
+      rescue IOError => e
+        # VMS JRuby raises IOError with this message instead of Errno::EPIPE
+        raise Errno::EPIPE if /^broken pipe/.match e.message
+        raise
+      end
     end
   end
 end

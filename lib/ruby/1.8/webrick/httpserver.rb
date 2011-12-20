@@ -63,6 +63,12 @@ module WEBrick
             callback.call(req, res)
           end
           server.service(req, res)
+        rescue IOError => ex
+          # On VMS JRuby, IOError with the following text is raised
+	  # instead of Errno::ECONNRESET (which would have re-raised
+	  # HTTPStatus::RequestTimeout)
+          raise unless /^connection reset by peer/.match ex.message
+          res.set_error(HTTPStatus::RequestTimeout.new)
         rescue HTTPStatus::EOFError, HTTPStatus::RequestTimeout => ex
           res.set_error(ex)
         rescue HTTPStatus::Error => ex
